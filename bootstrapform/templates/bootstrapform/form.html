@@ -12,5 +12,11 @@
 {% endfor %}
 
 {% for field in form.visible_fields %}
+    {% if forloop.counter0|divisibleby:num_cols %}
+        <div class="col-md-{{ col_width }}">
+    {% endif %}
     {% include 'bootstrapform/field.html' %}
+    {% if forloop.last or forloop.counter|divisibleby:num_cols %}
+        </div>
+    {% endif %}
 {% endfor %}
