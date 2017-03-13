@@ -56,7 +56,7 @@ def add_input_classes(field):
         field.field.widget.attrs['class'] = field_classes
 
 
-def render(element, markup_classes, num_cols=1):
+def render(element, markup_classes, num_cols=None):
     element_type = element.__class__.__name__.lower()
 
     if element_type == 'boundfield':
@@ -70,22 +70,43 @@ def render(element, markup_classes, num_cols=1):
                 for field in form.visible_fields():
                     add_input_classes(field)
             template = get_template("bootstrapform/formset.html")
+            context = Context({
+                'formset': element,
+                'classes': markup_classes,
+                'col_width': num_cols and (config.BOOTSTRAP_COLUMN_COUNT // num_cols),
+                'num_cols': num_cols,
+            })
         else:
             for field in element.visible_fields():
                 add_input_classes(field)
             template = get_template("bootstrapform/form.html")
-
-        context = Context({
-            'form': element,
-            'classes': markup_classes,
-            'num_cols': num_cols,
-            'col_width': config.BOOTSTRAP_COLUMN_COUNT // num_cols,
-        })
+            context = Context({
+                'form': element,
+                'classes': markup_classes,
+                'col_width': num_cols and (config.BOOTSTRAP_COLUMN_COUNT // num_cols),
+                'num_cols': num_cols,
+            })
 
         if django_version >= (1, 8):
             context = context.flatten()
 
     return template.render(context)
+
+
+@register.filter
+def as_grid(form, num_cols=1):
+    visible_fields = form.visible_fields()
+    len_visible_fields = len(visible_fields)
+    rows = []
+    columns = []
+
+    for i, field in enumerate(visible_fields, start=1):
+        columns.append(field)
+        if not i % num_cols or i == len_visible_fields:
+            rows.append(columns)
+            columns = []
+
+    return rows
 
 
 @register.filter
